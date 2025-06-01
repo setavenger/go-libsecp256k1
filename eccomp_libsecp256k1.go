@@ -65,7 +65,7 @@ func PubKeyNegate(pubKey *[33]byte) error {
 		33,
 	)
 	C.secp256k1_ec_pubkey_negate(globalSecp256k1Context, &pk)
-	// var out [33]C.uchar
+
 	var outLen C.size_t = 33
 	C.secp256k1_ec_pubkey_serialize(
 		globalSecp256k1Context,
@@ -74,9 +74,7 @@ func PubKeyNegate(pubKey *[33]byte) error {
 		&pk,
 		C.SECP256K1_EC_COMPRESSED,
 	)
-	// for i := 0; i < 33; i++ {
-	// 	pubKey[i] = byte(out[i])
-	// }
+
 	return nil
 }
 
@@ -112,19 +110,17 @@ func PubKeyAdd(pubKey1, pubKey2 *[33]byte) ([33]byte, error) {
 		(**C.secp256k1_pubkey)(pks),
 		2,
 	)
+
 	// var out [33]byte
 	out := new([33]byte)
-	var outC [33]C.uchar
 	var outLen C.size_t = 33
 	C.secp256k1_ec_pubkey_serialize(
 		globalSecp256k1Context,
-		&outC[0],
+		(*C.uchar)(unsafe.Pointer(out)),
 		&outLen,
 		&outPk,
 		C.SECP256K1_EC_COMPRESSED,
 	)
-
-	*out = *(*[33]byte)(unsafe.Pointer(&outC))
 
 	return *out, nil
 }
@@ -162,13 +158,7 @@ func PubKeyFromSecKey(privKey *[32]byte) *[33]byte {
 		C.SECP256K1_EC_COMPRESSED,
 	)
 
-	// for i := 0; i < 33; i++ {
-	// 	out[i] = byte(outC[i])
-	// }
-	// out = *(*[33]byte)(unsafe.Pointer(&outC))
-	// fmt.Printf("out-normal: %x\n", out)
 	*out = *(*[33]byte)(unsafe.Pointer(&outC))
-	// fmt.Printf("out-unsafe: %x\n", out)
 
 	return out
 }
@@ -197,11 +187,10 @@ func PubKeyTweakMul(pubKey *[33]byte, tweak *[32]byte) error {
 		return ErrPubKeyTweakMul
 	}
 
-	var outC [33]C.uchar
 	var outLen C.size_t = 33
 	code = C.secp256k1_ec_pubkey_serialize(
 		globalSecp256k1Context,
-		&outC[0],
+		(*C.uchar)(unsafe.Pointer(pubKey)),
 		&outLen,
 		&pk,
 		C.SECP256K1_EC_COMPRESSED,
@@ -209,16 +198,6 @@ func PubKeyTweakMul(pubKey *[33]byte, tweak *[32]byte) error {
 	if code == 0 {
 		return ErrPubKeyTweakMul
 	}
-
-	// for i := 0; i < 33; i++ {
-	// 	pubKey[i] = byte(out[i])
-	// }
-
-	// fmt.Printf("pubkey-normal: %x\n", *pubKey)
-	// pubKey = (*[33]byte)(unsafe.Pointer(&out))
-	// fmt.Printf("pubkey-unsafe: %x\n", *pubKey)
-
-	*pubKey = *(*[33]byte)(unsafe.Pointer(&outC))
 
 	return nil
 }
