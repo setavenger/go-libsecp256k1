@@ -42,11 +42,12 @@ func init() {
 }
 
 // MultPrivateKeys multiplies a private key by a tweak value (in-place)
-// using secp256k1_ec_privkey_tweak_mul.
-func MultPrivateKeys(privKey, tweak *[32]byte) error {
-	if C.secp256k1_ec_privkey_tweak_mul(
+// using secp256k1_ec_seckey_tweak_mul.
+// todo: rename to MultSecKey?
+func MultPrivateKeys(secKey, tweak *[32]byte) error {
+	if C.secp256k1_ec_seckey_tweak_mul(
 		globalSecp256k1Context,
-		(*C.uchar)(unsafe.Pointer(&privKey[0])),
+		(*C.uchar)(unsafe.Pointer(&secKey[0])),
 		(*C.uchar)(unsafe.Pointer(&tweak[0])),
 	) != 1 {
 		return ErrTweak
@@ -126,11 +127,11 @@ func PubKeyAdd(pubKey1, pubKey2 *[33]byte) ([33]byte, error) {
 }
 
 // SecKeyAdd adds a tweak value to a secret key in-place,
-// using secp256k1_ec_privkey_tweak_add.
-func SecKeyAdd(privKey, tweak *[32]byte) error {
-	if C.secp256k1_ec_privkey_tweak_add(
+// using secp256k1_ec_seckey_tweak_add.
+func SecKeyAdd(secKey, tweak *[32]byte) error {
+	if C.secp256k1_ec_seckey_tweak_add(
 		globalSecp256k1Context,
-		(*C.uchar)(unsafe.Pointer(privKey)),
+		(*C.uchar)(unsafe.Pointer(secKey)),
 		(*C.uchar)(unsafe.Pointer(tweak)),
 	) != 1 {
 		return ErrTweak
@@ -140,12 +141,12 @@ func SecKeyAdd(privKey, tweak *[32]byte) error {
 
 // PubKeyFromSecKey creates a public key (compressed, 33 bytes)
 // from the given secret key.
-func PubKeyFromSecKey(privKey *[32]byte) *[33]byte {
+func PubKeyFromSecKey(secKey *[32]byte) *[33]byte {
 	var pk C.secp256k1_pubkey
 	C.secp256k1_ec_pubkey_create(
 		globalSecp256k1Context,
 		&pk,
-		(*C.uchar)(unsafe.Pointer(&privKey[0])),
+		(*C.uchar)(unsafe.Pointer(&secKey[0])),
 	)
 	out := new([33]byte) // Allocate the array
 	var outC [33]C.uchar
